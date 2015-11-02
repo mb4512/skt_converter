@@ -11,11 +11,11 @@ def main():
 	Ry = 2.0;
 
 	# Change these: atom name and max angular momentum
-	atom1 = "C"
-	atom2 = "H"
+	atom1 = "H"
+	atom2 = "N"
 
-	latom1 = 1
-	latom2 = 0
+	latom1 = 0
+	latom2 = 1
 
 	opposite = False
 
@@ -258,7 +258,10 @@ def main():
 	pptlist = ['{:>10.2f} {:>17.8e}'.format(rad, Ry * splinefunc(rad, sp_coeff, sp_cutoff, sp_rep)) for rad in np.arange(0.0, sp_cutoff+0.0001, 0.02)]
 	[bdtarr.append(line) for line in pptlist]
 
-	bdt_file = open(atom1 + "_" + atom2 + ".bdt", "w")
+	if case == 'hetero' and latom1 == 1 and latom2 == 1:
+		bdt_file = open(atom1 + "_" + atom2 + "_het.bdt", "w")
+	else:
+		bdt_file = open(atom1 + "_" + atom2 + ".bdt", "w")
 
 	for line in bdtarr:
 		bdt_file.write(str(line)+'\n')
