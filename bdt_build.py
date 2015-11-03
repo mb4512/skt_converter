@@ -3,19 +3,23 @@
 
 import numpy as np
 import scipy as sci
-import sys, os
+import sys, os, getopt
 
+def main(argv):
+	try:
+		atom1, atom2 = argv[1], argv[2]
+	except:
+		print '\tInput error: bdt_build.py <atomic species 1> <atomic species 2>'
+		return 2
 
-def main():
 	# Units conversion
 	Ry = 2.0;
 
-	# Change these: atom name and max angular momentum
-	atom1 = "H"
-	atom2 = "N"
+	# Dictionary of shell numbers
+	ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2}
 
-	latom1 = 0
-	latom2 = 1
+	latom1 = ldict[atom1]
+	latom2 = ldict[atom2]
 
 	opposite = False
 
@@ -52,7 +56,7 @@ def main():
 	mass    =	varr[2]
 
 	# radial distance values for knot points
-	rad_range = np.array([n*dx for n in range(nknots)])
+	rad_range = np.array([(n+1)*dx for n in range(nknots)])
 
 	# find start of tables
 	istart = 0
@@ -113,12 +117,13 @@ def main():
 
 		# If everything fails, return 0 and throw an exception
 		print "WARNING: Spline value {:f} fell through the spline function!" % r
-		return 0
+		return 2
 
 
 	# SKT knots consistency
 	if len(skt) != nknots:
 		print "WARNING: number of SKT knots not consistent with number of SKT rows parsed!"
+		nknots = len(skt)
 	else:
 		print "CHECK: number of SKT knots consistent with number of SKT rows parsed."
 
@@ -207,6 +212,7 @@ def main():
 
 	# loop through the integrals in reverse, starting with ss
 	for col in range(len(new_order), 0, -1):
+
 		# Only write #1 #2 orbital id if a new interaction is entered
 		if new_order[counter] != symflag:
 			# Swap l1 and l2 in shells if a l1 > l2 case is converted (eg C-H)
@@ -271,6 +277,7 @@ def main():
 
 if __name__ == "__main__":
 	# Execute the main code if run as a script.
-	main()
+	main(sys.argv)
+
 
 

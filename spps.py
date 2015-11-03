@@ -8,8 +8,8 @@ import sys, os
 def main():
 	
 	# Change these: hetero atom names
-	atom1 = "N"
-	atom2 = "H"
+	atom1 = "C"
+	atom2 = "N"
 
 	if atom1 == atom2:
 		return 0
