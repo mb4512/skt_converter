@@ -3,13 +3,13 @@
 
 import numpy as np
 import scipy as sci
-import sys, os, getopt
+import sys, os
 
 def main(argv):
 	try:
 		atom1, atom2 = argv[1], argv[2]
 	except:
-		print '\tInput error: bdt_build.py <atomic species 1> <atomic species 2>'
+		print '\tInput error, expected: bdt_build.py <atomic species 1> <atomic species 2>'
 		return 2
 
 	# Units conversion
@@ -123,6 +123,7 @@ def main(argv):
 	# SKT knots consistency
 	if len(skt) != nknots:
 		print "WARNING: number of SKT knots not consistent with number of SKT rows parsed!"
+		print len(skt), nknots
 		nknots = len(skt)
 	else:
 		print "CHECK: number of SKT knots consistent with number of SKT rows parsed."

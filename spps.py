@@ -5,17 +5,25 @@ import numpy as np
 import scipy as sci
 import sys, os
 
-def main():
-	
-	# Change these: hetero atom names
-	atom1 = "C"
-	atom2 = "N"
+def main(argv):
+	try:
+		atom1, atom2 = argv[1], argv[2]
+	except:
+		print '\tInput error, expected: spps.py <atomic species 1> <atomic species 2>'
+		return 2
 
 	if atom1 == atom2:
 		return 0
 
+	fpath1 = atom1 + "_" + atom2 + "_het.bdt"
+	fpath2 = atom2 + "_" + atom1 + "_het.bdt"
+
 	# Open bdt files
-	bdt1 = open(atom1 + "_" + atom2 + "_het.bdt", "r")
+	try:
+		bdt1 = open(fpath1, "r")
+	except:
+		print '\tError: cannot find', fpath1, 'file. Have you called bdt_build for', atom1, atom2,'yet?' 
+		return 2
 
 	bdtarr1 = []
 
@@ -36,7 +44,12 @@ def main():
 	arr2_sp = False
 	arr2_ps = False
 
-	bdt2 = open(atom2 + "_" + atom1 + "_het.bdt", "r")
+	try:
+		bdt2 = open(fpath2, "r")
+	except:
+		print '\tError: cannot find', fpath2, 'file. Have you called bdt_build for', atom2, atom1,'yet?' 
+		return 2
+
 	for i, line in enumerate(bdt2):
 		bdtarr2.append(line)
 		if line == '0 1\n':
@@ -113,4 +126,4 @@ def main():
 
 if __name__ == "__main__":
 	# Execute the main code if run as a script.
-	main()
+	main(sys.argv)

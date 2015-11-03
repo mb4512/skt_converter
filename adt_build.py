@@ -5,11 +5,14 @@ import numpy as np
 import scipy as sci
 import sys, os
 
-def main():
-	Ry = 2.0
+def main(argv):
+	try:
+		atom = argv[1]
+	except:
+		print '\tInput error, expected: ./adt_build.py <atomic species>'
+		return 2
 
-	# Change this: atom name
-	atom = "N"
+	Ry = 2.0
 
 	skf = open("mio-1-1/" + atom + "-" + atom + ".skf", "r")
 
@@ -45,8 +48,9 @@ def main():
 	if nl == 2:
 		norb = 4
 	if nl == 3:
-		print "Case l=3 not coded up."
-		return 1
+		norb = 9
+		#print "Case l=3 not coded up."
+		#return 1
 	adtarr.append(str(norb))
 
 	# Add radius of the orbitals. This seems to be 5 for all species in the mio-1-1 set
@@ -132,4 +136,4 @@ def main():
 
 if __name__ == "__main__":
 	# Execute the main code if run as a script.
-	main()
+	main(sys.argv)
