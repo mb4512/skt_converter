@@ -5,6 +5,8 @@ import numpy as np
 import scipy as sci
 import sys, os
 
+from polytail import Tail
+
 def main(argv):
 	try:
 		atom1, atom2 = argv[1], argv[2]
@@ -92,7 +94,6 @@ def main(argv):
 
 
 	def splinefunc(r, sp_coeff, sp_cutoff, sp_rep):
-
 		# Return repulsive potentials if r smaller than first spline knot
 		if r < sp_coeff[0][0]:
 			return np.exp(-sp_rep[0]*r + sp_rep[1]) + sp_rep[2]
@@ -101,7 +102,7 @@ def main(argv):
 		elif r >= sp_cutoff:
 			return 0.0
 
-		elif sp_cutoff > r >= sp_coeff[-2][0]:
+		elif sp_cutoff > r >= sp_coeff[-1][0]:
 			tailco = sp_coeff[-1]
 			dr = r - tailco[0]
 			# Lazy polynomial :)
@@ -224,17 +225,37 @@ def main(argv):
 
 			symflag = new_order[counter]
 
-		# Add number of knots
-		bdtarr.append(nknots)
-
 		s_index = col - 1
 		h_index = len(new_order) + col - 1
 
 		# Fetch SKT elements related to this radial function. First column: S, second: H
 		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
 
-		sign = 1.0
+		# Initalise tail function going from 9.0 to 11.0 bohr
+		r0 = 8.0
+		i = 400
+		rc = 11.0
 
+		tailH = Tail(knotpoints[:, 0], i, dx, r0, rc)
+		tailS = Tail(knotpoints[:, 1], i, dx, r0, rc)
+
+		# Extend rad_range to new lengths
+		tail_range = r0 + np.array([(n+1)*dx for n in range(int((rc-r0)/0.02))])
+		rad_range = np.append(rad_range[:i], tail_range)
+
+		# Add number of knots
+		nknots = len(rad_range)
+		bdtarr.append(nknots)
+
+		# Calculate tail elements
+		tailpointsH = np.array([tailH.tail(x) for x in tail_range])
+		tailpointsS = np.array([tailS.tail(x) for x in tail_range])
+
+		# Append the tail to knotpoints 
+		tailarray = np.array([tailpointsH, tailpointsS]).T
+		knotpoints = np.concatenate((knotpoints[:i], tailarray), axis = 0)
+
+		sign = 1.0
 		# sign switch for hetero case
 		if case == "hetero":
 			sign *= -1.0
