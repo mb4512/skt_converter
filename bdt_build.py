@@ -193,12 +193,13 @@ def main(argv):
 
 		# Reverse hamiltonian entries
 		skt[:, pp_dup:pp_len] = np.fliplr(skt[:, pp_dup:pp_len])
+
 		# Reverse overlap entries
 		s1 = pp_dup + len(new_order)
 		s2 = pp_len + len(new_order)
 		skt[:, s1:s2] = np.fliplr(skt[:, s1:s2])
 
-	print "\nFirst row of reverted skt table: "
+	print "\nFirst row of reversed skt table: "
 	print skt[0, :]
 
 	# Check if number of skt columns agree with number to be imported by new_order variable
@@ -234,7 +235,8 @@ def main(argv):
 		# Fetch SKT elements related to this radial function. First column: S, second: H
 		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
 
-		# Initalise tail function going from ~9.0 to 11.0 bohr
+
+		# Initialise tail function going from ~9.36 to 11.0 bohr
 		i = 450
 		r0 = rad_range[i]
 		rc = 11.0
@@ -260,8 +262,8 @@ def main(argv):
 
 		sign = 1.0
 		# sign switch for hetero case
-		if case == "hetero":
-			sign *= -1.0
+		#if case == "hetero":
+		#	sign *= -1.0
 
 		# further sign switch for l1,l2 reversed orbitals
 		if new_order[counter][0] > new_order[counter][1]: #this case means that the orbitals were reversed
