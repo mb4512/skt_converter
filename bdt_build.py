@@ -57,9 +57,6 @@ def main(argv):
 	epars   = 	varr[1]
 	mass    =	varr[2]
 
-	# radial distance values for knot points
-	rad_range = np.array([(n+1)*dx for n in range(nknots)])
-
 	# find start of tables
 	istart = 0
 
@@ -78,6 +75,12 @@ def main(argv):
 		if varr[i] == ['<Documentation>']:
 			isp_end = i
 
+	# Fetch r offset
+	offset = (istart - 4) * dx
+	print "noffset: ", offset
+
+	# radial distance values for knot points
+	rad_range = np.array([(n+1)*dx for n in range(nknots)]) + offset
 
 	# Create numpy array storing all the SKT elements
 	skt = np.array(varr[istart:iend])
@@ -231,16 +234,16 @@ def main(argv):
 		# Fetch SKT elements related to this radial function. First column: S, second: H
 		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
 
-		# Initalise tail function going from 9.0 to 11.0 bohr
-		r0 = 8.0
-		i = 400
+		# Initalise tail function going from ~9.0 to 11.0 bohr
+		i = 450
+		r0 = rad_range[i]
 		rc = 11.0
 
 		tailH = Tail(knotpoints[:, 0], i, dx, r0, rc)
 		tailS = Tail(knotpoints[:, 1], i, dx, r0, rc)
 
 		# Extend rad_range to new lengths
-		tail_range = r0 + np.array([(n+1)*dx for n in range(int((rc-r0)/0.02))])
+		tail_range = r0 + np.array([n*dx for n in range(int((rc-r0)/0.02) + 1)])
 		rad_range = np.append(rad_range[:i], tail_range)
 
 		# Add number of knots

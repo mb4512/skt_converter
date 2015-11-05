@@ -53,8 +53,9 @@ def main(argv):
 		#return 1
 	adtarr.append(str(norb))
 
-	# Add radius of the orbitals. This seems to be 5 for all species in the mio-1-1 set
-	adtarr.append("5.0")
+	# Add radius of the orbitals. This seems to be 5.5 bohr for all species in the 
+	# mio-1-1 set with a polynomial tail.
+	adtarr.append("5.5")
 
 	# Add single site terms in the energy
 	# PLACEHOLDER
