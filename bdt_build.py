@@ -208,16 +208,9 @@ def main(argv):
 	rev_new_order = new_order[::-1]
 
 	dd_dup = [i for i, x in enumerate(rev_new_order) if x == [2, 2]] # dd duplicates 
-	dp_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 2]] # pd duplicates
+	pd_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 2]] # pd duplicates
 	pp_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 1]] # pp duplicates
 
-	# Fetch first index of occurence
-	
-	#if len(dd_dup) > 0:
-	#	dd_dup = dd_dup[0]
-	#if len(dp_dup) > 0:
-	#	dp_dup = dp_dup[0]
-	
 	if len(pp_dup) > 0:
 		pp_dup = pp_dup[0]
 
@@ -230,12 +223,49 @@ def main(argv):
 		# Reverse order of pp shells in skt
 
 		# Reverse hamiltonian entries
-		skt[:, pp_dup:pp_len] = np.fliplr(skt[:, pp_dup:pp_len])
+		skt[:, pp_dup:pp_dup+pp_len] = np.fliplr(skt[:, pp_dup:pp_dup+pp_len])
 
 		# Reverse overlap entries
 		s1 = pp_dup + len(new_order)
-		s2 = pp_len + len(new_order)
+		s2 = pp_dup + pp_len + len(new_order)
+
+		print skt[0, s1:s2]
 		skt[:, s1:s2] = np.fliplr(skt[:, s1:s2])
+		print skt[0, s1:s2]
+
+	if len(pd_dup) > 0:
+		pd_dup = pd_dup[0]
+
+		# Get number of pd shells 
+		pd_len = def_order.count([1, 2])
+
+		# Reverse hamiltonian entries
+		skt[:, pd_dup:pd_dup+pd_len] = np.fliplr(skt[:, pd_dup:pd_dup+pd_len])
+
+		# Reverse overlap entries
+		s1 = pd_dup + len(new_order)
+		s2 = pd_dup + pd_len + len(new_order)
+	
+		print skt[0, s1:s2]
+		skt[:, s1:s2] = np.fliplr(skt[:, s1:s2])
+		print skt[0, s1:s2]
+
+	if len(dd_dup) > 0:
+		dd_dup = dd_dup[0]
+
+		# Get number of dd shells 
+		dd_len = def_order.count([2, 2])
+
+		# Reverse hamiltonian entries
+		skt[:, dd_dup:dd_dup+dd_len] = np.fliplr(skt[:, dd_dup:dd_dup+dd_len])
+
+		# Reverse overlap entries
+		s1 = dd_dup + len(new_order)
+		s2 = dd_dup + dd_len + len(new_order)
+
+		print skt[0, s1:s2]
+		skt[:, s1:s2] = np.fliplr(skt[:, s1:s2])
+		print skt[0, s1:s2]
 
 	print "\nFirst row of reversed skt table: "
 	print skt[0, :]
