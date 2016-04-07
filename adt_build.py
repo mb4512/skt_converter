@@ -75,7 +75,7 @@ def main(argv):
 			if l == 2:
 				strline += str(skfarr[1][-3]/5.0) + "  "
 
-			strline += "5.0"
+			strline += "5.5"
 
 			adtarr.append(strline)
 
@@ -117,7 +117,7 @@ def main(argv):
 		uvalue = skfarr[1][6]
 	if nl == 2: 
 		uvalue = 0.5 * (skfarr[1][6] + skfarr[1][5])
-	if nl == 2: 
+	if nl == 3: 
 		uvalue = 1.0/3.0 * (skfarr[1][6] + skfarr[1][5] + skfarr[1][4])
 
 	adtarr.append(str(Ry * uvalue) + "  -0.1") 

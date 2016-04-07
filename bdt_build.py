@@ -76,14 +76,19 @@ def main(argv):
 			isp_end = i
 
 	# Fetch r offset
-	offset = (istart - 4) * dx
-	print "noffset: ", offset
+	#offset = (istart - 4) * dx
+	#print "noffset: ", offset
+
+	# Define r offsset
+	offset = 0.38
+	print "noffset ", 0.38
 
 	# radial distance values for knot points
 	rad_range = np.array([(n+1)*dx for n in range(nknots)]) + offset
 
 	# Create numpy array storing all the SKT elements
-	skt = np.array(varr[istart:iend])
+	# DEBUG DEBUG DEBUG: the -1
+	skt = np.array(varr[istart:iend-1])
 
 	# Spline values
 	sp_nknots = varr[iend + 1][0]
@@ -123,6 +128,36 @@ def main(argv):
 		print "WARNING: Spline value {:f} fell through the spline function!" % r
 		return 2
 
+	def makeknots (col, new_order, skt, dx, i, rad_range, n):
+		h_index = col
+		s_index = col - len(skt[0])/2
+
+		print "s, h: ", s_index, h_index
+		# Fetch SKT elements related to this radial function. First column: S, second: H
+		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
+
+		# Initialise tail function going from ~9.36 to 11.0 bohr
+		i = 450
+		r0 = rad_range[i]
+		rc = 11.0
+
+		tailH = Tail(knotpoints[:, 0], i, dx, r0, rc)
+		tailS = Tail(knotpoints[:, 1], i, dx, r0, rc)
+
+		# Extend rad_range to new lengths
+		tail_range = r0 + np.array([n*dx for n in range(int((rc-r0)/0.02) + 2)])
+		new_rrange = np.append(rad_range[:i], tail_range)
+
+		# Calculate tail elements
+		tailpointsH = np.array([tailH.tail(x) for x in tail_range])
+		tailpointsS = np.array([tailS.tail(x) for x in tail_range])
+
+		# Append the tail to knotpoints 
+		tailarray = np.array([tailpointsH, tailpointsS]).T
+		knotpoints = np.concatenate((knotpoints[:i], tailarray), axis = 0)
+
+		return (len(knotpoints), new_rrange, knotpoints)
+
 
 	# SKT knots consistency
 	if len(skt) != nknots:
@@ -140,14 +175,15 @@ def main(argv):
 
 
 	# maximum angular momenta for these atoms
-	l1 = min(latom1, latom2)
-	l2 = max(latom1, latom2)
+	l1 = latom1
+	l2 = latom2
 
 	# order in which the skt file orbitals are entered 
 	def_order = [[0, 0], [0, 1], [0, 2], [1, 1], [1, 1], [1, 2], [1, 2], [2, 2], [2, 2], [2, 2]]
-
+	
 	# order of orbitals appearing in this file
-	new_order = [val for val in def_order if val[0] <= l1 and val[1] <= l2]
+	new_order = [val for val in def_order if (val[0] <= l1 and val[1] <= l2)]
+	print "new_order", new_order
 	print "Number of SKT columns to import: " + str(2 * len(new_order))
 
 	# Find empty columns in SKT
@@ -155,22 +191,24 @@ def main(argv):
 	empty_columns = np.all(empty_table, 0)
 
 	# Create indices according to columns to copy over
-	new_indices = np.array([i for i, val in enumerate(empty_columns) if val == False])
+	if empty_columns.shape != ():
+		new_indices = np.array([i for i, val in enumerate(empty_columns) if val == False])
+	else:
+		new_indices = range(len(def_order))
 
 	# Slice out all the 0 elements
 	skt = skt[:, new_indices]
 
 	print "Shells to import: ", new_order
 	print "\nFirst row of skt table: "
-	print skt[0, :]
 
 	# The different symmetric cases of integrals (example: pp_sigma, pp_pi)	are entered in reverse
 	# order in the skt file compared to plato. Hence these entried need to be swapped in the skt array.
 	# Create reverse new_order array
 	rev_new_order = new_order[::-1]
 
-	#dd_dup = [i for i, x in enumerate(rev_new_order) if x == [2, 2]] # dd duplicates 
-	#dp_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 2]] # pd duplicates
+	dd_dup = [i for i, x in enumerate(rev_new_order) if x == [2, 2]] # dd duplicates 
+	dp_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 2]] # pd duplicates
 	pp_dup = [i for i, x in enumerate(rev_new_order) if x == [1, 1]] # pp duplicates
 
 	# Fetch first index of occurence
@@ -217,72 +255,21 @@ def main(argv):
 	symflag = 0
 
 	# loop through the integrals in reverse, starting with ss
-	for col in range(len(new_order), 0, -1):
+	for col in range(len(new_order)):
 
-		# Only write #1 #2 orbital id if a new interaction is entered
+		# Only write #1 #2 orbital identifier if a new interaction is entered
 		if new_order[counter] != symflag:
-			# Swap l1 and l2 in shells if a l1 > l2 case is converted (eg C-H)
-			if opposite:
-				new_order[counter] = list(reversed(new_order[counter]))
 			orbs = str(new_order[counter][0]) + " " + str(new_order[counter][1])
 			bdtarr.append(orbs)
-
 			symflag = new_order[counter]
 
-		s_index = col - 1
-		h_index = len(new_order) + col - 1
-
-		# Fetch SKT elements related to this radial function. First column: S, second: H
-		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
-
-
-		# Initialise tail function going from ~9.36 to 11.0 bohr
-		i = 450
-		r0 = rad_range[i]
-		rc = 11.0
-
-		tailH = Tail(knotpoints[:, 0], i, dx, r0, rc)
-		tailS = Tail(knotpoints[:, 1], i, dx, r0, rc)
-
-		# Extend rad_range to new lengths
-		tail_range = r0 + np.array([n*dx for n in range(int((rc-r0)/0.02) + 1)])
-		rad_range = np.append(rad_range[:i], tail_range)
-
-		# Add number of knots
-		nknots = len(rad_range)
+		(nknots, radrange, knotpoints) = makeknots (len(skt[1])-1 - col, new_order, skt, dx, 450, rad_range, n)
+		print col, len(skt[1])-1 - col, knotpoints[0], new_order[counter]
 		bdtarr.append(nknots)
 
-		# Calculate tail elements
-		tailpointsH = np.array([tailH.tail(x) for x in tail_range])
-		tailpointsS = np.array([tailS.tail(x) for x in tail_range])
-
-		# Append the tail to knotpoints 
-		tailarray = np.array([tailpointsH, tailpointsS]).T
-		knotpoints = np.concatenate((knotpoints[:i], tailarray), axis = 0)
-
-		sign = 1.0
-		# sign switch for hetero case
-		#if case == "hetero":
-		#	sign *= -1.0
-
-		# further sign switch for l1,l2 reversed orbitals
-		if new_order[counter][0] > new_order[counter][1]: #this case means that the orbitals were reversed
-			sign *= -1.0
-
-		sktlist = ['{:>10.2f} {:>17.8e} {:>17.8e}'.format(rad_range[i], sign * knotpoints[i][0], Ry * sign * knotpoints[i][1]) for i in range(nknots)]
+		sktlist = ['{:>10.2f} {:>17.8e} {:>17.8e}'.format(radrange[i], knotpoints[i][0], Ry * knotpoints[i][1]) for i in range(nknots)]
 
 		[bdtarr.append(line) for line in sktlist]
-
-		if l1 == l2 and new_order[counter][1] > new_order[counter][0]: #in homo case need additional block for reversed symmetry
-			new_order[counter] = list(reversed(new_order[counter]))
-			orbs = str(new_order[counter][0]) + " " + str(new_order[counter][1])
-
-			bdtarr.append(orbs)
-			bdtarr.append(nknots)
-
-			sktlist = ['{:>10.2f} {:>17.8e} {:>17.8e}'.format(rad_range[i], -sign * knotpoints[i][0], -Ry * sign * knotpoints[i][1]) for i in range(nknots)]
-			[bdtarr.append(line) for line in sktlist]
-
 		counter += 1
 
 	# Add pairpotential
@@ -291,10 +278,8 @@ def main(argv):
 	pptlist = ['{:>10.2f} {:>17.8e}'.format(rad, Ry * splinefunc(rad, sp_coeff, sp_cutoff, sp_rep)) for rad in np.arange(0.0, sp_cutoff+0.0001, 0.02)]
 	[bdtarr.append(line) for line in pptlist]
 
-	if case == 'hetero' and latom1 == 1 and latom2 == 1:
-		bdt_file = open(atom1 + "_" + atom2 + "_het.bdt", "w")
-	else:
-		bdt_file = open(atom1 + "_" + atom2 + ".bdt", "w")
+
+	bdt_file = open(atom1 + "_" + atom2 + "_het.bdt", "w")
 
 	for line in bdtarr:
 		bdt_file.write(str(line)+'\n')
