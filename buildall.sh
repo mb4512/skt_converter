@@ -1,9 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-declare -a atoms=('H' 'C' 'O' 'N' 'P' 'S')
+declare -a atoms=('H' 'C' 'O' 'S' 'N' 'P')
 
 rm *.adt > /dev/null
 rm *.bdt > /dev/null
+rm -r output > /dev/null
 mkdir output > /dev/null
 
 echo "Building..."

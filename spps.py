@@ -13,7 +13,7 @@ def main(argv):
 		return 2
 
 	# Dictionary of shell numbers
-	ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2}
+        ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2, "Au": 2, "F": 1, "Cl": 1, "Br": 1, "I": 1}
 
 	l1 = ldict[atom1]
 	l2 = ldict[atom2]
@@ -26,9 +26,9 @@ def main(argv):
 	fpath1 = atom1 + "_" + atom2 + "_het.bdt"
 	fpath2 = atom2 + "_" + atom1 + "_het.bdt"
 
-	def findentry (btddata):
+	def findentry (bdtdata):
 		divisors = {}
-		for i, line in enumerate(btddata):
+		for i, line in enumerate(bdtdata):
 			if len(line) == 4 and line[1] == " ":
 				divisors[line[:-1]] = i
 		return divisors
@@ -127,6 +127,31 @@ def main(argv):
 
 		if atom1 == atom2:
 			bdtarr2 = bdtarr1
+                else:
+                    # Slice out ps_sigma integral
+                    n_knots = int(bdtarr1[orbs2['0 1'] + 1])
+                    i_start = int(orbs1['0 1'])
+                    PS = bdtarr1[i_start+2:i_start + n_knots + 2]
+
+                    # Convert to np array
+                    npPS = toarr(PS)
+
+                    # Rebuild string lines and swap signs
+                    stringlist = ['{:>10.2f} {:>17.8e} {:>17.8e}\n'.format(row[0], -row[1], -row[2]) for row in npPS]
+
+                    # Find index after 0 1 orbital
+                    n_knots2 = int(bdtarr2[orbs2['0 1'] + 1])
+                    i_start2 = int(orbs2['0 1'])
+
+                    print n_knots2, i_start2
+
+                    bdtarr2.insert(i_start2 + n_knots2 + 2 + 0, '1 0\n')
+                    bdtarr2.insert(i_start2 + n_knots2 + 2 + 1, str(n_knots) + '\n')
+
+                    for i,line in enumerate(stringlist):
+                        bdtarr2.insert(i_start2 + n_knots2 + 2 + 2 + i, line)
+
+
 
 	# D-S case
 	if l1 == 2 and l2 == 0:
@@ -488,14 +513,14 @@ def main(argv):
 			bdtarr2 = bdtarr1
 
 	bdt_file_1 = open(atom1 + "_" + atom2 + ".bdt", "w")
-	bdt_file_2 = open(atom2 + "_" + atom1 + ".bdt", "w")
+        bdt_file_2 = open(atom2 + "_" + atom1 + ".bdt", "w")
 
-	for line in bdtarr1:
-		bdt_file_1.write(str(line))
-	bdt_file_1.close()
+        for line in bdtarr1:
+            bdt_file_1.write(str(line))
+        bdt_file_1.close()
 
 	for line in bdtarr2:
-		bdt_file_2.write(str(line))
+            bdt_file_2.write(str(line))
 	bdt_file_2.close()
 
 	return 0

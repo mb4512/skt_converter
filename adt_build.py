@@ -13,6 +13,13 @@ def main(argv):
 		return 2
 
 	Ry = 2.0
+        
+        ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2, "Au": 2, "F": 1, "Cl": 1, "Br": 1, "I": 1}
+
+        if (atom == "Au"):
+            rcut = "9.69"
+        else: 
+            rcut = "5.50"
 
 	skf = open("mio-1-1/" + atom + "-" + atom + ".skf", "r")
 
@@ -39,8 +46,9 @@ def main(argv):
 	adtarr.append(str(skfarr[1][-1] + skfarr[1][-2] + skfarr[1][-3]))
 
 	# Add number of shells
-	nl = skfarr[0][-1]
-	adtarr.append(str(nl))
+	#nl = skfarr[0][-1]
+	nl = ldict[atom]+1
+        adtarr.append(str(nl))
 
 	# Add number of orbitals
 	if nl == 1:
@@ -49,13 +57,12 @@ def main(argv):
 		norb = 4
 	if nl == 3:
 		norb = 9
-		#print "Case l=3 not coded up."
-		#return 1
-	adtarr.append(str(norb))
+	
+        adtarr.append(str(norb))
 
 	# Add radius of the orbitals. This seems to be 5.5 bohr for all species in the 
 	# mio-1-1 set with a polynomial tail.
-	adtarr.append("5.5")
+	adtarr.append(rcut)
 
 	# Add single site terms in the energy
 	# PLACEHOLDER
@@ -75,7 +82,7 @@ def main(argv):
 			if l == 2:
 				strline += str(skfarr[1][-3]/5.0) + "  "
 
-			strline += "5.5"
+			strline += rcut
 
 			adtarr.append(strline)
 

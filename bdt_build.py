@@ -18,7 +18,7 @@ def main(argv):
 	Ry = 2.0;
 
 	# Dictionary of shell numbers
-	ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2}
+        ldict = {"H": 0, "C": 1, "O": 1, "N": 1, "S": 2, "P": 2, "Au": 2, "F": 1, "Cl": 1, "Br": 1, "I": 1}
 
 	latom1 = ldict[atom1]
 	latom2 = ldict[atom2]
@@ -52,10 +52,17 @@ def main(argv):
 
 
 	# SKT values
-	dx 		= 	varr[0][0]
+	dx 	= 	varr[0][0]
 	nknots  = 	varr[0][1]
 	epars   = 	varr[1]
 	mass    =	varr[2]
+
+        # Define longest allowed interaction distance
+        maxdist = min([11.0, dx*nknots]);
+        
+        # Fetch integral range from the file
+        r0 = maxdist - 1.0
+        rcut = maxdist + 1.0
 
 	# find start of tables
 	istart = 0
@@ -71,20 +78,16 @@ def main(argv):
 		if varr[i] == ['Spline']:
 			iend = i
 
-		# find '<Documentation>' (end of spline tables)
-		if varr[i] == ['<Documentation>']:
-			isp_end = i
-
-	# Fetch r offset
-	#offset = (istart - 4) * dx
-	#print "noffset: ", offset
+        # spline end is given by the row number in the sfk file
+        isp_end = 3 + iend + varr[iend+1][0]
 
 	# Define r offsset
-	offset = 0.38
-	print "noffset ", 0.38
+	#offset = 0.38
+	offset = 0.02
+        print "noffset ", offset
 
 	# radial distance values for knot points
-	rad_range = np.array([(n+1)*dx for n in range(nknots)]) + offset
+	rad_range = np.array([(n)*dx for n in range(nknots)]) + offset
 
 	# Create numpy array storing all the SKT elements
 	# DEBUG DEBUG DEBUG: the -1
@@ -99,7 +102,6 @@ def main(argv):
 
 	# Create numpy array storing all the spline coefficients
 	sp_coeff = np.array(varr[iend+3:isp_end])
-
 
 	def splinefunc(r, sp_coeff, sp_cutoff, sp_rep):
 		# Return repulsive potentials if r smaller than first spline knot
@@ -128,7 +130,7 @@ def main(argv):
 		print "WARNING: Spline value {:f} fell through the spline function!" % r
 		return 2
 
-	def makeknots (col, new_order, skt, dx, i, rad_range, n):
+	def makeknots (col, new_order, skt, dx, r0, rc, rad_range):
 		h_index = col
 		s_index = col - len(skt[0])/2
 
@@ -136,16 +138,14 @@ def main(argv):
 		# Fetch SKT elements related to this radial function. First column: S, second: H
 		knotpoints = np.array([skt[:, h_index], skt[:, s_index]]).T
 
-		# Initialise tail function going from ~9.36 to 11.0 bohr
-		i = 450
-		r0 = rad_range[i]
-		rc = 11.0
+		# Initialise tail function going from ~9.00 to 11.0 bohr
+                i = int(np.ceil(r0/dx))
 
 		tailH = Tail(knotpoints[:, 0], i, dx, r0, rc)
 		tailS = Tail(knotpoints[:, 1], i, dx, r0, rc)
 
 		# Extend rad_range to new lengths
-		tail_range = r0 + np.array([n*dx for n in range(int((rc-r0)/0.02) + 2)])
+		tail_range = r0 + np.array([n*dx for n in range(1, int(np.ceil((rc-r0)/0.02)) + 1)])
 		new_rrange = np.append(rad_range[:i], tail_range)
 
 		# Calculate tail elements
@@ -170,6 +170,8 @@ def main(argv):
 	# Spline knots consistency
 	if len(sp_coeff) != sp_nknots:
 		print "WARNING: number of spline knots not consistent with number of spline rows parsed!"
+		print len(sp_coeff), sp_nknots
+		nknots = len(sp_coeff)
 	else:
 		print "CHECK: number of spline knots consistent with number of spline rows parsed."
 
@@ -200,7 +202,7 @@ def main(argv):
 	skt = skt[:, new_indices]
 
 	print "Shells to import: ", new_order
-	print "\nFirst row of skt table: "
+        print "\nFirst row of skt table: "
 
 	# The different symmetric cases of integrals (example: pp_sigma, pp_pi)	are entered in reverse
 	# order in the skt file compared to plato. Hence these entried need to be swapped in the skt array.
@@ -293,7 +295,7 @@ def main(argv):
 			bdtarr.append(orbs)
 			symflag = new_order[counter]
 
-		(nknots, radrange, knotpoints) = makeknots (len(skt[1])-1 - col, new_order, skt, dx, 450, rad_range, n)
+		(nknots, radrange, knotpoints) = makeknots (len(skt[1])-1 - col, new_order, skt, dx, r0, rcut, rad_range)
 		print col, len(skt[1])-1 - col, knotpoints[0], new_order[counter]
 		bdtarr.append(nknots)
 
